@@ -70,6 +70,7 @@ import org.apache.hadoop.yarn.server.resourcemanager.metrics.TimelineServiceV1Pu
 import org.apache.hadoop.yarn.server.resourcemanager.metrics.TimelineServiceV2Publisher;
 import org.apache.hadoop.yarn.server.resourcemanager.nodelabels.RMDelegatedNodeLabelsUpdater;
 import org.apache.hadoop.yarn.server.resourcemanager.nodelabels.RMNodeLabelsManager;
+import org.apache.hadoop.yarn.server.resourcemanager.constraint.AllocationTagsManager;
 import org.apache.hadoop.yarn.server.resourcemanager.recovery.NullRMStateStore;
 import org.apache.hadoop.yarn.server.resourcemanager.recovery.RMStateStore;
 import org.apache.hadoop.yarn.server.resourcemanager.recovery.RMStateStore.RMState;
@@ -490,6 +491,10 @@ public class ResourceManager extends CompositeService implements Recoverable {
       throws InstantiationException, IllegalAccessException {
     return new RMNodeLabelsManager();
   }
+
+  protected AllocationTagsManager createAllocationTagsManager() {
+    return new AllocationTagsManager();
+  }
   
   protected DelegationTokenRenewer createDelegationTokenRenewer() {
     return new DelegationTokenRenewer();
@@ -608,6 +613,10 @@ public class ResourceManager extends CompositeService implements Recoverable {
       nlm.setRMContext(rmContext);
       addService(nlm);
       rmContext.setNodeLabelManager(nlm);
+
+      AllocationTagsManager allocationTagsManager =
+          createAllocationTagsManager();
+      rmContext.setAllocationTagsManager(allocationTagsManager);
 
       RMDelegatedNodeLabelsUpdater delegatedNodeLabelsUpdater =
           createRMDelegatedNodeLabelsUpdater();
