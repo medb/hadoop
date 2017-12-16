@@ -68,7 +68,6 @@ import org.apache.hadoop.fs.CreateFlag;
 import org.apache.hadoop.fs.FSDataInputStream;
 import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.FileAlreadyExistsException;
-import org.apache.hadoop.fs.FileSystem.Statistics.StatisticsData;
 import org.apache.hadoop.fs.FileUtil;
 import org.apache.hadoop.fs.FsServerDefaults;
 import org.apache.hadoop.fs.FileChecksum;
@@ -121,7 +120,6 @@ import org.apache.hadoop.security.AccessControlException;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.hadoop.test.GenericTestUtils;
 import org.apache.hadoop.test.LambdaTestUtils;
-import org.apache.hadoop.test.Whitebox;
 import org.apache.hadoop.util.DataChecksum;
 import org.apache.hadoop.util.Time;
 import org.apache.hadoop.util.concurrent.HadoopExecutors;
@@ -676,12 +674,6 @@ public class TestDistributedFileSystem {
   public void testStatistics() throws IOException {
     FileSystem.getStatistics(HdfsConstants.HDFS_URI_SCHEME,
         DistributedFileSystem.class).reset();
-    @SuppressWarnings("unchecked")
-    ThreadLocal<StatisticsData> data = (ThreadLocal<StatisticsData>)
-        Whitebox.getInternalState(
-        FileSystem.getStatistics(HdfsConstants.HDFS_URI_SCHEME,
-        DistributedFileSystem.class), "threadData");
-    data.set(null);
 
     int lsLimit = 2;
     final Configuration conf = getTestConfiguration();
