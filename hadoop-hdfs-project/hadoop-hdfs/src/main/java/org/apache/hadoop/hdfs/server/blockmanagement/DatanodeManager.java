@@ -198,9 +198,6 @@ public class DatanodeManager {
     this.defaultIpcPort = NetUtils.createSocketAddr(
           conf.getTrimmed(DFSConfigKeys.DFS_DATANODE_IPC_ADDRESS_KEY,
               DFSConfigKeys.DFS_DATANODE_IPC_ADDRESS_DEFAULT)).getPort();
-    //HostFileManager hostFileManager = new HostFileManager();
-    //hostFileManager.setConf(conf);
-    //this.hostConfigManager = hostFileManager;
     this.hostConfigManager = ReflectionUtils.newInstance(
         conf.getClass(DFSConfigKeys.DFS_NAMENODE_HOSTS_PROVIDER_CLASSNAME_KEY,
             HostFileManager.class, HostConfigManager.class), conf);
@@ -891,8 +888,6 @@ public class DatanodeManager {
       // Checks if the node is not on the hosts list.  If it is not, then
       // it will be disallowed from registering. 
       if (!hostConfigManager.isIncluded(nodeReg)) {
-        LOG.warn(
-            "Datanode '" + nodeReg + "' is not included in " + hostConfigManager.getIncludes());
         throw new DisallowedDatanodeException(nodeReg);
       }
         

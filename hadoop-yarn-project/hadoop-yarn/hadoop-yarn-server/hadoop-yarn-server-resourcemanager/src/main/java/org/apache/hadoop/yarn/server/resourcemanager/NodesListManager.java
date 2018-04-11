@@ -437,7 +437,6 @@ public class NodesListManager extends CompositeService implements
 
   private HostsFileReader createHostsFileReader(String includesFile,
       String excludesFile) throws IOException, YarnException {
-    //return new HostsFileReader(includesFile, excludesFile);
     HostsFileReader hostsReader =
         new HostsFileReader(includesFile,
             (includesFile == null || includesFile.isEmpty()) ? null
