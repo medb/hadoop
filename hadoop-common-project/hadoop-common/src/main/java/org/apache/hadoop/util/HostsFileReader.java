@@ -18,7 +18,13 @@
 
 package org.apache.hadoop.util;
 
+import com.google.cloud.hadoop.fs.gcs.GoogleHadoopFileSystemBase;
+import com.google.cloud.hadoop.gcsio.GoogleCloudStorage;
+import com.google.cloud.hadoop.gcsio.GoogleCloudStorageItemInfo;
+import com.google.cloud.hadoop.gcsio.StorageResourceId;
 import java.io.*;
+import java.net.URI;
+import java.nio.channels.Channels;
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.Set;
@@ -30,6 +36,8 @@ import org.apache.commons.logging.Log;
 import org.apache.hadoop.classification.InterfaceAudience;
 import org.apache.hadoop.classification.InterfaceAudience.Private;
 import org.apache.hadoop.classification.InterfaceStability;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.FileSystem;
 
 // Keeps track of which datanodes/nodemanagers are allowed to connect to the
 // namenode/resourcemanager.
@@ -37,6 +45,17 @@ import org.apache.hadoop.classification.InterfaceStability;
 @InterfaceStability.Unstable
 public class HostsFileReader {
   private static final Log LOG = LogFactory.getLog(HostsFileReader.class);
+
+  private static final GoogleCloudStorage gcs;
+  static {
+    FileSystem fs;
+    try {
+      fs = FileSystem.get(URI.create("gs://placeholder"), new Configuration());
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+    gcs = ((GoogleHadoopFileSystemBase) fs).getGcsFs().getGcs();
+  }
 
   private final AtomicReference<HostDetails> current;
 
@@ -61,8 +80,10 @@ public class HostsFileReader {
 
   public static void readFileToSet(String type,
       String filename, Set<String> set) throws IOException {
-    File file = new File(filename);
-    FileInputStream fis = new FileInputStream(file);
+    GoogleCloudStorageItemInfo info = gcs.getItemInfo(StorageResourceId.fromObjectName(filename));
+    StorageResourceId resourceId =
+        StorageResourceId.fromObjectName(filename, info.getContentGeneration());
+    InputStream fis = Channels.newInputStream(gcs.open(resourceId));
     readFileToSetWithFileInputStream(type, filename, fis, set);
   }
 
@@ -214,10 +235,10 @@ public class HostsFileReader {
    * An atomic view of the included and excluded hosts.
    */
   public static class HostDetails {
-    final String includesFile;
-    final Set<String> includes;
-    final String excludesFile;
-    final Set<String> excludes;
+    private final String includesFile;
+    private final Set<String> includes;
+    private final String excludesFile;
+    private final Set<String> excludes;
 
     HostDetails(String includesFile, Set<String> includes,
         String excludesFile, Set<String> excludes) {

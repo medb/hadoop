@@ -31,7 +31,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 
-import org.apache.hadoop.util.GcsHostsFileReader;
 import org.apache.hadoop.util.HostsFileReader;
 import org.apache.hadoop.yarn.api.records.ApplicationAttemptId;
 import org.apache.hadoop.yarn.api.records.ApplicationId;
@@ -118,7 +117,7 @@ public class TestRMNodeTransitions {
           null, null, mock(DelegationTokenRenewer.class), null, null, null,
           null, null);
     NodesListManager nodesListManager = mock(NodesListManager.class);
-    GcsHostsFileReader reader = mock(GcsHostsFileReader.class);
+    HostsFileReader reader = mock(HostsFileReader.class);
     when(nodesListManager.getHostsReader()).thenReturn(reader);
     ((RMContextImpl) rmContext).setNodesListManager(nodesListManager);
     scheduler = mock(YarnScheduler.class);

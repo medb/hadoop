@@ -18,16 +18,16 @@
 
 package org.apache.hadoop.yarn.server.resourcemanager;
 
-import com.google.common.annotations.VisibleForTesting;
 import java.io.IOException;
 import java.util.HashSet;
-import java.util.Iterator;
-import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.Map;
+import java.util.Iterator;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
@@ -35,7 +35,7 @@ import org.apache.hadoop.net.NetUtils;
 import org.apache.hadoop.net.Node;
 import org.apache.hadoop.service.AbstractService;
 import org.apache.hadoop.service.CompositeService;
-import org.apache.hadoop.util.GcsHostsFileReader;
+import org.apache.hadoop.util.HostsFileReader;
 import org.apache.hadoop.util.HostsFileReader.HostDetails;
 import org.apache.hadoop.util.Time;
 import org.apache.hadoop.yarn.api.records.NodeId;
@@ -52,6 +52,8 @@ import org.apache.hadoop.yarn.server.resourcemanager.rmnode.RMNode;
 import org.apache.hadoop.yarn.server.resourcemanager.rmnode.RMNodeEvent;
 import org.apache.hadoop.yarn.server.resourcemanager.rmnode.RMNodeEventType;
 import org.apache.hadoop.yarn.server.resourcemanager.rmnode.RMNodeImpl;
+
+import com.google.common.annotations.VisibleForTesting;
 import org.apache.hadoop.yarn.util.Clock;
 import org.apache.hadoop.yarn.util.SystemClock;
 
@@ -61,7 +63,7 @@ public class NodesListManager extends CompositeService implements
 
   private static final Log LOG = LogFactory.getLog(NodesListManager.class);
 
-  private GcsHostsFileReader hostsReader;
+  private HostsFileReader hostsReader;
   private Configuration conf;
   private final RMContext rmContext;
 
@@ -102,8 +104,10 @@ public class NodesListManager extends CompositeService implements
           createHostsFileReader(this.includesFile, this.excludesFile);
       setDecomissionedNMs();
       printConfiguredHosts();
-    } catch (YarnException | IOException e) {
-      disableHostsFileReader(e);
+    } catch (YarnException ex) {
+      disableHostsFileReader(ex);
+    } catch (IOException ioe) {
+      disableHostsFileReader(ioe);
     }
 
     final int nodeRemovalTimeout =
@@ -175,10 +179,10 @@ public class NodesListManager extends CompositeService implements
     if (!LOG.isDebugEnabled()) {
       return;
     }
-
-    LOG.debug("hostsReader: in=" + conf.get(YarnConfiguration.RM_NODES_INCLUDE_FILE_PATH,
+    
+    LOG.debug("hostsReader: in=" + conf.get(YarnConfiguration.RM_NODES_INCLUDE_FILE_PATH, 
         YarnConfiguration.DEFAULT_RM_NODES_INCLUDE_FILE_PATH) + " out=" +
-        conf.get(YarnConfiguration.RM_NODES_EXCLUDE_FILE_PATH,
+        conf.get(YarnConfiguration.RM_NODES_EXCLUDE_FILE_PATH, 
             YarnConfiguration.DEFAULT_RM_NODES_EXCLUDE_FILE_PATH));
 
     HostDetails hostDetails = hostsReader.getHostDetails();
@@ -415,7 +419,11 @@ public class NodesListManager extends CompositeService implements
       this.hostsReader =
           createHostsFileReader(this.includesFile, this.excludesFile);
       setDecomissionedNMs();
-    } catch (IOException | YarnException e) {
+    } catch (IOException ioe2) {
+      // Should *never* happen
+      this.hostsReader = null;
+      throw new YarnRuntimeException(ioe2);
+    } catch (YarnException e) {
       // Should *never* happen
       this.hostsReader = null;
       throw new YarnRuntimeException(e);
@@ -423,13 +431,23 @@ public class NodesListManager extends CompositeService implements
   }
 
   @VisibleForTesting
-  public GcsHostsFileReader getHostsReader() {
+  public HostsFileReader getHostsReader() {
     return this.hostsReader;
   }
 
-  private GcsHostsFileReader createHostsFileReader(String includesFile,
+  private HostsFileReader createHostsFileReader(String includesFile,
       String excludesFile) throws IOException, YarnException {
-    return new GcsHostsFileReader(includesFile, excludesFile);
+    //return new HostsFileReader(includesFile, excludesFile);
+    HostsFileReader hostsReader =
+        new HostsFileReader(includesFile,
+            (includesFile == null || includesFile.isEmpty()) ? null
+                : this.rmContext.getConfigurationProvider()
+                    .getConfigurationInputStream(this.conf, includesFile),
+            excludesFile,
+            (excludesFile == null || excludesFile.isEmpty()) ? null
+                : this.rmContext.getConfigurationProvider()
+                    .getConfigurationInputStream(this.conf, excludesFile));
+    return hostsReader;
   }
 
   private void updateInactiveNodes() {
