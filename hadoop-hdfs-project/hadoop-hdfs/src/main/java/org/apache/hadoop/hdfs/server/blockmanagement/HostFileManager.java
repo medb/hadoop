@@ -18,18 +18,17 @@
 package org.apache.hadoop.hdfs.server.blockmanagement;
 
 import com.google.common.annotations.VisibleForTesting;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hdfs.DFSConfigKeys;
-import org.apache.hadoop.hdfs.protocol.DatanodeID;
-import org.apache.hadoop.util.HostsFileReader;
-
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.HashSet;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hdfs.DFSConfigKeys;
+import org.apache.hadoop.hdfs.protocol.DatanodeID;
+import org.apache.hadoop.util.GcsHostsFileReader;
 
 /**
  * This class manages the include and exclude files for HDFS.
@@ -75,7 +74,7 @@ public class HostFileManager extends HostConfigManager {
     HostSet res = new HostSet();
     if (!filename.isEmpty()) {
       HashSet<String> entrySet = new HashSet<String>();
-      HostsFileReader.readFileToSet(type, filename, entrySet);
+      GcsHostsFileReader.readFileToSet(type, filename, entrySet);
       for (String str : entrySet) {
         InetSocketAddress addr = parseEntry(type, filename, str);
         if (addr != null) {

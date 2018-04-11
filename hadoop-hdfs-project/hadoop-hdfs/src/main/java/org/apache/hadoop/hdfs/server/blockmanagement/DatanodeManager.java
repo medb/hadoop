@@ -105,7 +105,7 @@ public class DatanodeManager {
   private final int defaultIpcPort;
 
   /** Read include/exclude files*/
-  private HostConfigManager hostConfigManager;
+  private final HostConfigManager hostConfigManager;
 
   /** The period to wait for datanode heartbeat.*/
   private long heartbeatExpireInterval;
@@ -198,9 +198,9 @@ public class DatanodeManager {
     this.defaultIpcPort = NetUtils.createSocketAddr(
           conf.getTrimmed(DFSConfigKeys.DFS_DATANODE_IPC_ADDRESS_KEY,
               DFSConfigKeys.DFS_DATANODE_IPC_ADDRESS_DEFAULT)).getPort();
-    this.hostConfigManager = ReflectionUtils.newInstance(
-        conf.getClass(DFSConfigKeys.DFS_NAMENODE_HOSTS_PROVIDER_CLASSNAME_KEY,
-            HostFileManager.class, HostConfigManager.class), conf);
+    HostFileManager hostFileManager = new HostFileManager();
+    hostFileManager.setConf(conf);
+    this.hostConfigManager = hostFileManager;
     try {
       this.hostConfigManager.refresh();
     } catch (IOException e) {
@@ -220,7 +220,7 @@ public class DatanodeManager {
     // in the cache; so future calls to resolve will be fast.
     if (dnsToSwitchMapping instanceof CachedDNSToSwitchMapping) {
       final ArrayList<String> locations = new ArrayList<>();
-      for (InetSocketAddress addr : hostConfigManager.getIncludes()) {
+      for (InetSocketAddress addr : this.hostConfigManager.getIncludes()) {
         locations.add(addr.getAddress().getHostAddress());
       }
       dnsToSwitchMapping.resolve(locations);
@@ -888,6 +888,8 @@ public class DatanodeManager {
       // Checks if the node is not on the hosts list.  If it is not, then
       // it will be disallowed from registering. 
       if (!hostConfigManager.isIncluded(nodeReg)) {
+        LOG.warn(
+            "Datanode '" + nodeReg + "' is not included in " + hostConfigManager.getIncludes());
         throw new DisallowedDatanodeException(nodeReg);
       }
         

@@ -203,6 +203,11 @@
       <scope>compile</scope>
     </dependency>
     <dependency>
+      <groupId>com.google.cloud.bigdataoss</groupId>
+      <artifactId>gcs-connector</artifactId>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
       <groupId>com.google.code.gson</groupId>
       <artifactId>gson</artifactId>
     </dependency>
