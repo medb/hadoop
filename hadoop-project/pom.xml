@@ -683,6 +683,12 @@
         <version>0.9.0</version>
       </dependency>
       <dependency>
+        <groupId>com.google.cloud.bigdataoss</groupId>
+        <artifactId>gcs-connector</artifactId>
+        <version>1.6.4-hadoop2</version>
+        <scope>provided</scope>
+      </dependency>
+      <dependency>
         <groupId>com.amazonaws</groupId>
         <artifactId>aws-java-sdk-s3</artifactId>
         <version>${aws-java-sdk.version}</version>
